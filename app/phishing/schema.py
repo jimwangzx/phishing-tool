@@ -1,6 +1,11 @@
 from marshmallow import Schema, fields
 
-class textInQuestion(Schema):
-  id = fields.Int(reguired=True)
+class Text(Schema):
+  id = fields.Int()
   text = fields.Str()
+
+class Email(Schema):
+  id = fields.Int()
+  subject = fields.Str()
+  content = fields.Str()
 
