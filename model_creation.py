@@ -55,7 +55,6 @@ texts_df['v1'] = texts_df['v1'].apply(preprocessor)
 print(texts_df)
 
 ### Text Data Model Creation ###
-nltk.download('stopwords')
 stop = stopwords.words('english')
 porter = PorterStemmer()
 def tokenizer(text):
@@ -74,18 +73,29 @@ tfidf = TfidfVectorizer(strip_accents=None,
                         preprocessor=None)
 
 # Look to expand the paramater grid to include as many relevant variables as possible
-param_grid = [{'vect__ngram_range': [(1, 2), (2, 2)],
+'''
+Parameter choices:
+TfIdfVectorizer:
+    - ngram_range: Chose to consider 1. unigrams and 2. unigrams with bigrams for text messages as texts are short and often times contain few keywords
+    - stop_words: Chose to consider with stop words and without because not sure if removal will help with classification due to the informal nature of texts
+    - norm: Using l2 (default) as texts can vary in length greatly
+SGDClassifier:
+    - clf_penalty: Chose to use both l1 and l2 because not sure whether the built in feature selection of l2 will be more important 
+    than l1's ability to ignore outliers in our dataset. Also chose to include elastic net as it mitigates the negatives of both l1 and l2
+    - l1_ratio: Defaults to .15 when elasticnet is used so testing an even split of l1 and l2 as well as leaning towards l1 regularization
+'''
+param_grid = [{'vect__ngram_range': [(1,1), (1, 2)],
                'vect__stop_words': [stop, None],
                'vect__tokenizer': [tokenizer, tokenizer_porter],
                'clf__penalty': ['l1', 'l2'],
-               'clf__alpha': [0.0001, 0.01, 1.0]},
-              {'vect__ngram_range': [(1, 2), (2, 2)],
+               'clf__alpha': [0.0001, 0.001, .01, .1]},
+              {'vect__ngram_range': [(1,1) (1, 2)],
                'vect__stop_words': [stop, None],
                'vect__tokenizer': [tokenizer, tokenizer_porter],
                'vect__use_idf':[False],
-               'vect__norm':[None],
-               'clf__penalty': ['l1', 'l2'],
-               'clf__alpha': [0.0001, 0.01, 1.0]},
+               'clf__penalty': ['elasticnet'],
+               'clf__alpha': [0.0001, 0.001, .01, .1],
+               'l1_ratio': [.15, .5, .85]}, 
               ]
 
 lr_tfidf = Pipeline([('vect', tfidf),
@@ -95,7 +105,7 @@ gs_lr_tfidf = GridSearchCV(lr_tfidf, param_grid,
                            scoring='accuracy',
                            cv=5,
                            verbose=2,
-                           n_jobs=-1)
+                           n_jobs=-1) # Utilizes all cores on machine to speed up grid search
 
 gs_lr_tfidf.fit(X_train, y_train)
 
@@ -104,6 +114,8 @@ print('CV Accuracy: %.3f' % gs_lr_tfidf.best_score_)
 
 bestModel = gs_lr_tfidf.best_estimator_
 print('Test Accuracy: %.3f' % bestModel.score(X_test, y_test))
+
+# Will need to pull in some validation data - Will look into this
 
 ### Email Data Preprocessing ###
 
