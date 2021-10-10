@@ -15,6 +15,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_val_score
 from sklearn.linear_model import SGDClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
 
 
 '''
@@ -23,7 +24,7 @@ Text data gotten from: https://www.kaggle.com/uciml/sms-spam-collection-dataset
 '''
 
 ### Text Data Collecting and Preprocessing ###
-texts_df = pd.read_csv(r"text_data\spam.csv")
+texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
 print(texts_df)
 texts_df.dropna(1, inplace=True) #Removing excess variable columns
 print(texts_df)
@@ -51,11 +52,22 @@ def preprocessor(text): # Getting rid of emojis as they are commonplace in text 
     text = re.sub(emojis, r' \1 ', text)
     return text
 
-texts_df['v1'] = texts_df['v1'].apply(preprocessor)
+BAD_SYMBOLS_RE = re.compile('[^0-9a-z #+_]')
+STOPWORDS = set(stopwords.words('english'))
+
+def clean_text(text):
+    text = text.lower() # lowercase text
+    text = BAD_SYMBOLS_RE.sub('', text) # delete symbols which are in BAD_SYMBOLS_RE from text
+    text = ' '.join(word for word in text.split() if word not in STOPWORDS) # delete stopwors from text
+    return text
+
+texts_df['v2'] = texts_df['v2'].apply(clean_text)
+texts_df['v2'] = texts_df['v2'].apply(preprocessor)
 print(texts_df)
 
 ### Text Data Model Creation ###
 stop = stopwords.words('english')
+
 porter = PorterStemmer()
 def tokenizer(text):
     return text.split()
@@ -63,11 +75,12 @@ def tokenizer(text):
 def tokenizer_porter(text):
     return [porter.stem(word) for word in text.split()]
 
-# Approx. 80% of the data allocated to training
-X_train = texts_df.loc[:4456, 'v1'].values
-y_train = texts_df.loc[:4456, 'v2'].values
-X_test = texts_df.loc[4456:, 'v1'].values
-y_test = texts_df.loc[4456:, 'v2'].values
+
+# 70% of the data allocated to training
+X = texts_df.v2
+y = texts_df.v1
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state = 1)
+
 tfidf = TfidfVectorizer(strip_accents=None,
                         lowercase=False,
                         preprocessor=None)
@@ -84,22 +97,17 @@ SGDClassifier:
     than l1's ability to ignore outliers in our dataset. Also chose to include elastic net as it mitigates the negatives of both l1 and l2
     - l1_ratio: Defaults to .15 when elasticnet is used so testing an even split of l1 and l2 as well as leaning towards l1 regularization
 '''
-param_grid = [{'vect__ngram_range': [(1,1), (1, 2)],
-               'vect__stop_words': [stop, None],
+param_grid = [{'vect__ngram_range': [(1,1), (1, 2), (2,2)],
                'vect__tokenizer': [tokenizer, tokenizer_porter],
+               'vect__use_idf':[False, True],
                'clf__penalty': ['l1', 'l2'],
-               'clf__alpha': [0.0001, 0.001, .01, .1]},
-              {'vect__ngram_range': [(1,1), (1, 2)],
-               'vect__stop_words': [stop, None],
-               'vect__tokenizer': [tokenizer, tokenizer_porter],
-               'vect__use_idf':[False],
-               'clf__penalty': ['elasticnet'],
-               'clf__alpha': [0.0001, 0.001, .01, .1],
-               'l1_ratio': [.15, .5, .85]}, 
+               'clf__alpha': [.00001, .0001, .001, .01],
+               'clf__loss': ['log', 'hinge']
+               }
               ]
 
 lr_tfidf = Pipeline([('vect', tfidf),
-                     ('clf', SGDClassifier(loss='log', random_state=1))])
+                     ('clf', SGDClassifier(loss='log', random_state=1, max_iter=5, tol=None))])
 
 gs_lr_tfidf = GridSearchCV(lr_tfidf, param_grid,
                            scoring='accuracy',
