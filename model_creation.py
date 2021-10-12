@@ -1,5 +1,6 @@
 # Written by Stuart Ryan, October 2021
 
+import random
 # Python packages for Natrual Language Processing
 import re
 from nltk.stem.porter import PorterStemmer
@@ -24,6 +25,21 @@ Text data gotten from: https://www.kaggle.com/uciml/sms-spam-collection-dataset5
 '''
 BAD_SYMBOLS_RE = re.compile('[^0-9a-z #+_]')
 STOPWORDS = set(stopwords.words('english'))
+
+#Will need to have an if statement to ignore grid search as naive bayes models have no hyperparameters
+models_of_interest = [
+(SGDClassifier(random_state=1, max_iter=5, tol=None), {'clf__penalty': ['l1', 'l2'], 'clf__alpha': [.00001, .0001, .001, .01], 'clf__loss': ['log', 'hinge']}),
+(tree.DecisionTreeClassifier(random_state=1), {"clf__criterion": ["gini", 'entropy'], 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
+(MultinomialNB(), {}), 
+(GaussianNB(), {}), 
+(BernouilliNB(), {}), 
+] 
+
+def model_creation(classifier_params):
+    pass
+
+###Model creation and testing (Consider using different classifiers as that will give us performances to compare that we can discuss in the paper)
+### One approach would be to create an overarching function that is fed in a list of dictionaries where each dictionary is a parameter grid corresponding to a ML classification model so we can PROPERLY COMPARE THE PERFORMANCES OF DIFFERENT CLASSIFICATION MODELS THAT HAVE THEIR HYPERPARAMETERS OPTIMIZED
 
 def clean_text(text):
     emojis = re.compile(
@@ -118,13 +134,45 @@ def text_model_creation():
     CV Accuracy: 0.984
     Test Accuracy: 0.983
     '''
+
+# Function to read in email files taken from the kaggle site for the data source and written by Wessel Van Lit
+def load_email(is_spam, filename):
+    directory = "../input/hamnspam/spam" if is_spam else "../input/hamnspam/ham"
+    with open(os.path.join(directory, filename), "rb") as f:
+        return email.parser.BytesParser(policy=email.policy.default).parse(f)
+
+# Function to make sure we shuffle our emails the same way each time we run the program
+def seedSetter(): 
+	return 0.3
+
 def email_model_creation():
     ### Email Data Collecting and Preprocessing ###
+    os.listdir('../input/hamnspam/')
+    ham_filenames = [name for name in sorted(os.listdir('../input/hamnspam/ham')) if len(name) > 20]
+    spam_filenames = [name for name in sorted(os.listdir('../input/hamnspam/spam')) if len(name) > 20]
+    ham_emails = [load_email(is_spam=False, filename=name) for name in ham_filenames]
+    spam_emails = [load_email(is_spam=True, filename=name) for name in spam_filenames]
+    # The above lines of code were written by the creator of the dataset Wessel Van Lit
+
+    # Making list of tuples containing all emails and shuffling in preparation for model training
+    all_emails = [(email, 0) for email in ham_emails] + [(email, 1) for email in spam_emails]
+    random.shuffle(all_emails, seedSetter)
+
+    # Creating tuple lists for email subjects, email content, and email addresses to be fed into dataframes
+    all_subjects = [(markedMail[0]['Subject'], markedMail[1]) for markedMail in all_emails]
+    all_addresses = [(markedMail[0]['From'], markedMail[1]) for markedMail in all_emails]
+    all_bodies = [(markedMail[0].get_content(), markedMail[1]) for markedMail in all_emails]
+
+    # Creating corresponding dataframes
+    subject_df = pd.Dataframe(data=all_subjects, columns=["subject", "is_spam"])
+    address_df = pd.Dataframe(data=all_addresses, columns=["address", "is_spam"])
+    body_df = pd.Dataframe(data=all_bodies, columns=["body", "is_spam"])
     
-    email_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
-    email_df.dropna(1, inplace=True) #Removing excess variable columns
-    #texts_df['v2'] = texts_df['v2'].apply(clean_text)
-    #print(texts_df)
-    pass
 
 email_model_creation()
+
+
+
+### Should turn all the preprocessing into one function that I can run the dataframes through
+
+# Variable holds tuples with var 0 being the classifier in use, and var 1 being the associated parameter grid
