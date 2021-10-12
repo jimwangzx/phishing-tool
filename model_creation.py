@@ -9,13 +9,16 @@ from nltk.corpus import stopwords
 # Python package for holding data
 import pandas as pd
 
-# Sklearn packages for model creation
+# Sklearn packages for model creation and testing
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import SGDClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-
+from sklearn.linear_model import SGDClassifier, LinearRegression
+from sklearn import tree
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
 # Python package for parsing data from email files
 import email
 
@@ -27,13 +30,17 @@ BAD_SYMBOLS_RE = re.compile('[^0-9a-z #+_]')
 STOPWORDS = set(stopwords.words('english'))
 
 #Will need to have an if statement to ignore grid search as naive bayes models have no hyperparameters
+'''
+Note about SVC vs SGD taken from documentation for SVC model (Initially unsure if dataset is large enough for SGD to be better): 
+For large datasets consider using LinearSVC or SGDClassifier instead, possibly after a Nystroem transformer.
+'''
 models_of_interest = [
 (SGDClassifier(random_state=1, max_iter=5, tol=None), {'clf__penalty': ['l1', 'l2'], 'clf__alpha': [.00001, .0001, .001, .01], 'clf__loss': ['log', 'hinge']}),
 (tree.DecisionTreeClassifier(random_state=1), {"clf__criterion": ["gini", 'entropy'], 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
-(MultinomialNB(), {}), 
-(GaussianNB(), {}), 
-(BernouilliNB(), {}), 
+(MultinomialNB(), {}),  
 ] 
+
+# Need to inclde logistic regression, SVM, k nearest, Random forest, gradient boosting
 
 def model_creation(classifier_params):
     pass
@@ -68,6 +75,12 @@ def clean_text(text):
     text = re.sub(emojis, r' \1 ', text) # getting rid of emojis
     return text
 
+def convert_labels(text):
+    if text == "spam":
+        return 1
+    else:
+        return 0
+
 porter = PorterStemmer()
 def tokenizer(text):
     return text.split()
@@ -80,6 +93,7 @@ def text_model_creation():
     texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
     texts_df.dropna(1, inplace=True) #Removing excess variable columns
     texts_df['v2'] = texts_df['v2'].apply(clean_text)
+    texts_df['v1'] = texts_df['v1'].apply(convert_labels)
     print(texts_df)
 
     ### Text Data Model Creation ###
