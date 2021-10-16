@@ -53,6 +53,10 @@ models_of_interest = [
 
 # This function gets rid of html tags as well as excess whitespace between paragraphs
 def clean_body(text):
+    text = text.lower() # lowercase text
+    text = BAD_SYMBOLS_RE.sub('', text) # delete symbols which are in BAD_SYMBOLS_RE from text
+    text = ' '.join(word for word in text.split() if word not in STOPWORDS) # delete stopwors from text
+
     text = re.sub('<[^>]*>', '', text)
     emoticons = re.findall('(?::|;|=)(?:-)?(?:\)|\(|D|P)',
                            text)
@@ -66,6 +70,9 @@ def clean_body(text):
 # Without cleaning: CV Accuracy: 0.884, Test Accuracy: 0.879
 # With cleaning: CV Accuracy: 0.944 Test Accuracy: 0.963
 def clean_address(text):
+    text = text.lower() # lowercase text
+    text = BAD_SYMBOLS_RE.sub('', text) # delete symbols which are in BAD_SYMBOLS_RE from text
+    text = ' '.join(word for word in text.split() if word not in STOPWORDS) # delete stopwors from text
     add = text.split("<")[-1][:-1].replace("@", " ").replace(".", " ")
     return add
 
@@ -111,97 +118,12 @@ def tokenizer(text):
 def tokenizer_porter(text):
     return [porter.stem(word) for word in text.split()]
 
-# Made this function to run multiple tests on the email addresses to see what different preprocessing techniques can improve performance 
-def test_model_creation():
-    os.listdir('email_data/hamnspam/')
-    ham_filenames = [name for name in sorted(os.listdir('email_data/hamnspam/ham')) if len(name) > 20]
-    spam_filenames = [name for name in sorted(os.listdir('email_data/hamnspam/spam')) if len(name) > 20]
-    ham_emails = [load_email(is_spam=False, filename=name) for name in ham_filenames]
-    spam_emails = [load_email(is_spam=True, filename=name) for name in spam_filenames]
-    # The above lines of code were written by the creator of the dataset Wessel Van Lit
-
-    # Making list of tuples containing all emails and shuffling in preparation for model training
-    all_emails = [(email, 0) for email in ham_emails] + [(email, 1) for email in spam_emails]
-    random.shuffle(all_emails, seedSetter)
-
-    print(type(all_emails[0][0]['From']).__name__)
-    # Creating tuple lists for email subjects, email content, and email addresses to be fed into dataframes
-    # The "=?iso" piece is so that we get rid of weird address lines
-    all_addresses = [(markedMail[0].get_payload(), markedMail[1]) for markedMail in all_emails if str(markedMail[0]['From'])[:5] != "=?iso"]
-
-    nonStr = []
-    for add in all_addresses:
-        if not isinstance(add[0], str):
-        #     all_addresses.remove(add)
-            nonStr.append(add)
-    print(len(nonStr))
-    print(nonStr[0][0][1].get_payload())
-
-    for add in all_addresses:
-        nonStr.append(type(add[0]))
-    print(set(nonStr))
-    
-    quit()
-   
-    # <email.header.Header object at 0x000002BBF4041548>
-    # Creating corresponding dataframes
-    address_df = pd.DataFrame(data=all_addresses, columns=["address", "is_spam"])
-    address_df['address'] = address_df['address'].apply(clean_address)
-    ### Text Data Model Creation ###
-    # 70% of the data allocated to training
-    X = address_df.address
-    y = address_df.is_spam
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state = 1)
-
-    tfidf = TfidfVectorizer(strip_accents=None,
-                            lowercase=False,
-                            preprocessor=None)
-
-    # Look to expand the paramater grid to include as many relevant variables as possible
-    '''
-    Parameter choices:
-    TfIdfVectorizer:
-        - ngram_range: Chose to consider 1. unigrams and 2. unigrams with bigrams for text messages as texts are short and often times contain few keywords
-        - tokenizer: Testing to see if stemming would be beneficial given the informal nature of words in texts (slang words)
-    SGDClassifier:
-        - clf_penalty: Chose to use both l1 and l2 because not sure whether the built in feature selection of l2 will be more important than l1's ability to ignore outliers in our dataset
-        - clf_loss: Comparing log to hinge to compare if SVM is better for classification than logisitc regression
-    '''
-    param_grid = [{'vect__ngram_range': [(1, 2)],
-                'vect__tokenizer': [tokenizer_porter],
-                'vect__use_idf':[True],
-                'clf__penalty': [ 'l2'],
-                'clf__alpha': [.00001],
-                'clf__loss': ['log']
-                }
-                ]
-
-    lr_tfidf = Pipeline([('vect', tfidf),
-                        ('clf', SGDClassifier(loss='log', random_state=1, max_iter=5, tol=None))])
-
-    gs_lr_tfidf = GridSearchCV(lr_tfidf, param_grid,
-                            scoring='accuracy',
-                            cv=5,
-                            verbose=2,
-                            n_jobs=-1) # Utilizes all cores on machine to speed up grid search
-
-    gs_lr_tfidf.fit(X_train, y_train)
-
-    print('Best parameter set: %s ' % gs_lr_tfidf.best_params_)
-    print('CV Accuracy: %.3f' % gs_lr_tfidf.best_score_)
-
-    bestModel = gs_lr_tfidf.best_estimator_
-    print('Test Accuracy: %.3f' % bestModel.score(X_test, y_test))
-
-
 # This functiom takes in a classifier model, parameter set for hyperparamater tuning, and test / train data
 # and outputs the following info in a list: Best Parameter Set, Cross Val Accuracy, Test Accuracy
-def text_model_creation(clf, clf_params, X_train, X_test, y_train, y_test):
+def tune_hyper(clf, clf_params, X_train, X_test, y_train, y_test):
     tfidf = TfidfVectorizer(strip_accents=None,
                             lowercase=False,
                             preprocessor=None)
-
-    # Look to expand the paramater grid to include as many relevant variables as possible
     '''
     Parameter choices:
     TfIdfVectorizer:
@@ -234,13 +156,6 @@ def text_model_creation(clf, clf_params, X_train, X_test, y_train, y_test):
     print('Test Accuracy: %.3f' % bestModel.score(X_test, y_test))
     return [gs_lr_tfidf.best_params_, gs_lr_tfidf.best_score_, bestModel.score(X_test, y_test)]
 
-    '''
-    The following was the best parameter set found using the above grid search:
-    Best parameter set: {'clf__alpha': 1e-05, 'clf__loss': 'log', 'clf__penalty': 'l2', 'vect__ngram_range': (1, 2), 'vect__tokenizer': <function tokenizer_porter at 0x0000023946B04438>, 'vect__use_idf': True} 
-    CV Accuracy: 0.984
-    Test Accuracy: 0.983
-    '''
-
 # Function to read in email files taken from the kaggle site for the data source and written by Wessel Van Lit and updated by Stuart Ryan
 def load_email(is_spam, filename):
     directory = "email_data/hamnspam/spam" if is_spam else "email_data/hamnspam/ham"
@@ -251,7 +166,13 @@ def load_email(is_spam, filename):
 def seedSetter(): 
 	return 0.3
 
-def email_model_creation():
+def model_creation(classifier_params):
+    ### Text Data Collecting and Preprocessing ###
+    texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
+    texts_df.dropna(1, inplace=True) #Removing excess variable columns
+    texts_df['v2'] = texts_df['v2'].apply(clean_text)
+    texts_df['v1'] = texts_df['v1'].apply(convert_labels)
+
     ### Email Data Collecting and Preprocessing ###
     os.listdir('email_data/hamnspam/')
     ham_filenames = [name for name in sorted(os.listdir('email_data/hamnspam/ham')) if len(name) > 20]
@@ -269,28 +190,30 @@ def email_model_creation():
     all_addresses = [(markedMail[0]['From'], markedMail[1]) for markedMail in all_emails if str(markedMail[0]['From'])[:5] != "=?iso"]
     all_bodies = [(markedMail[0].get_payload(), markedMail[1]) for markedMail in all_emails]
     
-    #Getting rid of header objects
+    #Some preprocessing work before text cleaning as we have straggler classes and objects alongside strings
+    valid_subs = []
+    for sub in all_subjects:
+        if isinstance(sub[0], str):
+            valid_subs.append(sub)
+
+    valid_adds = []
     for add in all_addresses:
-        if not isinstance(add[0], str):
-            all_addresses.remove(add)
+        if isinstance(add[0], str):
+            valid_adds.append(add)
+
+    valid_bods = []
+    for bod in all_bodies:
+        if isinstance(bod[0], str):
+            valid_bods.append(bod)    
+
     # Creating corresponding dataframes
-    subject_df = pd.DataFrame(data=all_subjects, columns=["subject", "is_spam"])
-    address_df = pd.DataFrame(data=all_addresses, columns=["address", "is_spam"])
-    body_df = pd.DataFrame(data=all_bodies, columns=["body", "is_spam"])
+    subject_df = pd.DataFrame(data=valid_subs, columns=["subject", "is_spam"])
+    address_df = pd.DataFrame(data=valid_adds, columns=["address", "is_spam"])
+    body_df = pd.DataFrame(data=valid_bods, columns=["body", "is_spam"])
 
+    subject_df['subject'] = subject_df['subject'].apply(clean_body)
     address_df['address'] = address_df['address'].apply(clean_address)
-
-    print(subject_df)
-    print(address_df)
-    print(body_df)
-
-def model_creation(classifier_params):
-    ### Text Data Collecting and Preprocessing ###
-    texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
-    texts_df.dropna(1, inplace=True) #Removing excess variable columns
-    texts_df['v2'] = texts_df['v2'].apply(clean_text)
-    texts_df['v1'] = texts_df['v1'].apply(convert_labels)
-    print(texts_df)
+    body_df['body'] = body_df['body'].apply(clean_body)
 
     ### Text Data Model Creation ###
     # 70% of the data allocated to training
@@ -298,11 +221,48 @@ def model_creation(classifier_params):
     y_text = texts_df.v1
     X_train_text, X_test_text, y_train_text, y_test_text = train_test_split(X_text, y_text, test_size=0.3, random_state = 1)
 
-    for moi in models_of_interest:
-        modelInfo = text_model_creation(moi[0], moi[1], X_train_text, X_test_text, y_train_text, y_test_text)
-        text_f = open(str(type(moi[0]).__name__)+".txt", "w")
-        text_f.writelines(modelInfo)
-        text_f.close()
+    ### Email Data Model Creation ###
+    # Subject
+    X_email_subj = subject_df.subject
+    y_email_subj = subject_df.is_spam
+    X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj = train_test_split(X_email_subj, y_email_subj, test_size=0.3, random_state = 1)
 
-#email_model_creation()
-test_model_creation()
+    # Address
+    X_email_add = address_df.address
+    y_email_add = address_df.is_spam
+    X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add = train_test_split(X_email_add, y_email_add, test_size=0.3, random_state = 1)
+
+    # Subject
+    X_email_body = body_df.body
+    y_email_body = body_df.is_spam
+    X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body = train_test_split(X_email_body, y_email_body, test_size=0.3, random_state = 1)
+
+    for moi in classifier_params:
+        modelName = str(type(moi[0]).__name__)
+        print("Testing model: " + modelName + " for text messages")
+        # Text
+        modelInfo = tune_hyper(moi[0], moi[1], X_train_text, X_test_text, y_train_text, y_test_text)
+        f = open(modelName+"_textmsg.txt", "w")
+        f.writelines(modelInfo)
+        f.close()
+        print("Testing model: " + modelName + " for email subjects")
+        # Subject
+        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj)
+        f = open(modelName+"_emailsubj.txt", "w")
+        f.writelines(modelInfo)
+        f.close()
+        print("Testing model: " + modelName + " for email addresses")
+        # Address
+        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add)
+        f = open(modelName+"_emailadd.txt", "w")
+        f.writelines(modelInfo)
+        f.close()
+        print("Testing model: " + modelName + " for email bodies")
+        # Body
+        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body)
+        f = open(modelName+"_emailbody.txt", "w")
+        f.writelines(modelInfo)
+        f.close()
+
+
+model_creation(models_of_interest)
