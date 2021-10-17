@@ -133,9 +133,6 @@ def tune_hyper(clf, clf_params, X_train, X_test, y_train, y_test):
     param_grid = [{**{'vect__ngram_range': [(1,1), (1, 2), (2,2)],
                 'vect__tokenizer': [tokenizer, tokenizer_porter],
                 'vect__use_idf':[False, True],
-                'clf__penalty': ['l1', 'l2'],
-                'clf__alpha': [.00001, .0001, .001, .01],
-                'clf__loss': ['log', 'hinge']
                 }, **clf_params}]
 
     lr_tfidf = Pipeline([('vect', tfidf),
@@ -245,25 +242,25 @@ def model_creation(classifier_params):
         f = open(modelName+".txt", "w")
         f.writelines("Text: ")
         f.writelines(modelInfo)
-        f.writelines(" ")
+        f.writelines("\n")
         print("Testing model: " + modelName + " for email subjects")
         # Subject
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj))
         f.writelines("Subject: ")
         f.writelines(modelInfo)
-        f.writelines(" ")
+        f.writelines("\n")
         print("Testing model: " + modelName + " for email addresses")
         # Address
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add))
         f.writelines("Address: ")
         f.writelines(modelInfo)
-        f.writelines(" ")
+        f.writelines("\n")
         print("Testing model: " + modelName + " for email bodies")
         # Body
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body))
         f.writelines("Body: ")
         f.writelines(modelInfo)
-        f.writelines(" ")
+        f.writelines("")
         f.close()
 
 
