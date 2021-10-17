@@ -242,25 +242,23 @@ def model_creation(classifier_params):
         print("Testing model: " + modelName + " for text messages")
         # Text
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_text, X_test_text, y_train_text, y_test_text))
-        f = open(modelName+"_textmsg.txt", "w")
+        f = open(modelName+".txt", "a")
+        f.write("Text: ")
         f.writelines(modelInfo)
-        f.close()
         print("Testing model: " + modelName + " for email subjects")
         # Subject
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj))
-        f = open(modelName+"_emailsubj.txt", "w")
+        f.write("Subject: ")
         f.writelines(modelInfo)
-        f.close()
         print("Testing model: " + modelName + " for email addresses")
         # Address
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add))
-        f = open(modelName+"_emailadd.txt", "w")
+        f.write("Address: ")
         f.writelines(modelInfo)
-        f.close()
         print("Testing model: " + modelName + " for email bodies")
         # Body
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body))
-        f = open(modelName+"_emailbody.txt", "w")
+        f.write("Body: ")
         f.writelines(modelInfo)
         f.close()
 
