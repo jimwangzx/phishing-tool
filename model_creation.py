@@ -242,7 +242,7 @@ def model_creation(classifier_params):
         print("Testing model: " + modelName + " for text messages")
         # Text
         modelInfo = str(tune_hyper(moi[0], moi[1], X_train_text, X_test_text, y_train_text, y_test_text))
-        f = open(modelName+".txt", "a")
+        f = open(modelName+".txt", "w")
         f.write("Text: ")
         f.writelines(modelInfo)
         print("Testing model: " + modelName + " for email subjects")
