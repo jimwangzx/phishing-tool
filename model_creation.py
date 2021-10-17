@@ -247,19 +247,19 @@ def model_creation(classifier_params):
         f.close()
         print("Testing model: " + modelName + " for email subjects")
         # Subject
-        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj)
+        modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj))
         f = open(modelName+"_emailsubj.txt", "w")
         f.writelines(modelInfo)
         f.close()
         print("Testing model: " + modelName + " for email addresses")
         # Address
-        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add)
+        modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add))
         f = open(modelName+"_emailadd.txt", "w")
         f.writelines(modelInfo)
         f.close()
         print("Testing model: " + modelName + " for email bodies")
         # Body
-        modelInfo = tune_hyper(moi[0], moi[1], X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body)
+        modelInfo = str(tune_hyper(moi[0], moi[1], X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body))
         f = open(modelName+"_emailbody.txt", "w")
         f.writelines(modelInfo)
         f.close()
