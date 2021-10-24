@@ -8,12 +8,25 @@ import * as ReactDOM from "react-dom";
 
 export default class App extends React.Component<{}, {}> {
     textareaObj: any;
+	constructor(props) {
+    	super(props);
+    	this.state = {
+      	value: 'Please write an essay about your favorite DOM element.'
+    	};
+
+    	this.handleChange = this.handleChange.bind(this);
+    	this.handleSubmit = this.handleSubmit.bind(this);
+  	}
  render() {  
 	return (
     <div style={{ marginLeft: "40%"}}>
       	<h2>Anti-Phishing</h2>
+		
 		<div className="multiline" style={{marginRight: "40%"}}>
-        <TextBoxComponent multiline={true} input={this.onInput = this.onInput.bind(this)} created={this.onCreate = this.onCreate.bind(this)} placeholder='Enter your text' floatLabelType='Auto' ref = {scope => {this.textareaObj = scope }}/>
+        <form onSubmit={this.handleSubmit}>
+		<TextBoxComponent multiline={true} onChange={this.handleChange} input={this.onInput = this.onInput.bind(this)} created={this.onCreate = this.onCreate.bind(this)} placeholder='Enter your text' floatLabelType='Auto' ref = {scope => {this.textareaObj = scope }}/>
+		 <input type="submit" value="Submit" />
+		</form>
 		</div>
 		<Chart
   			width={'500px'}
@@ -42,6 +55,13 @@ export default class App extends React.Component<{}, {}> {
         this.textareaObj.respectiveElement.style.height = "auto";
         this.textareaObj.respectiveElement.style.height = (this.textareaObj.respectiveElement .scrollHeight)+"px";
     }
+  	handleSubmit(event) {
+    	alert('An essay was submitted: ' + this.state.value);
+    	event.preventDefault();
+  	}
+	handleChange(event) {
+    	this.setState({value: event.target.value});
+  	}
 }
 ReactDOM.render(<App />, document.getElementById('root'));
 
