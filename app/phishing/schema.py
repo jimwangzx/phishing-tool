@@ -1,7 +1,7 @@
 from marshmallow import Schema, fields
 
 class Text(Schema):
-  id = fields.Int()
+  id = fields.Str()
   text = fields.Str()
 
 class Email(Schema):
