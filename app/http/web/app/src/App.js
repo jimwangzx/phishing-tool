@@ -13,25 +13,34 @@ export default class App extends React.Component<{}, {}> {
 	constructor(props) {
     	super(props);
     	this.state = {
-      	value: 'Please write an essay about your favorite DOM element.',
-    	phishing: JSON.parse(localStorage.getItem('phishing')) || 0,
+      	content: 'Please write an essay about your favorite DOM element.',
+    	subject_line: "",
+		email_address: "",
+		phishing: JSON.parse(localStorage.getItem('phishing')) || 0,
 		notPhishing:JSON.parse(localStorage.getItem('notPhishing')) || 100
 		};
  		const accessToken = "access";
     	this.apiClient = new APIClient(accessToken);
 
     	this.handleChange = this.handleChange.bind(this);
+		this.handleSubjChange = this.handleSubjChange.bind(this);
+		this.handleEmailChange = this.handleEmailChange.bind(this);
     	this.handleSubmit = this.handleSubmit.bind(this);
   	}
  render() {  
 	return (
     <div style={{ marginLeft: "40%"}}>
-      	<h2>Anti-Phishing</h2>
+      	<h2>Phishing detector</h2>
 		
 		<div className="multiline" style={{marginRight: "40%"}}>
         <form onSubmit={this.handleSubmit}>
-		<TextBoxComponent multiline={true} onChange={this.handleChange} input={this.onInput = this.onInput.bind(this)} created={this.onCreate = this.onCreate.bind(this)} placeholder='Enter your text' floatLabelType='Auto' ref = {scope => {this.textareaObj = scope }}/>
-		 <input type="submit" value="Submit" style={{marginLeft: "40%"}} />
+		<label className='label'>Content</label>
+		<TextBoxComponent multiline={true} onChange={this.handleChange} input={this.onInput = this.onInput.bind(this)} created={this.onCreate = this.onCreate.bind(this)} placeholder='Enter the text' floatLabelType='Never' ref = {scope => {this.textareaObj = scope }}/>
+		     <label className='label'>Subject-line (optional)</label>
+            <TextBoxComponent multiline={false} onChange={this.handleSubjChange}  placeholder='Enter the subject-line' floatLabelType='Never'/>
+            <label className='label'>Email Address (optional)</label>
+            <TextBoxComponent multiline={false} onChange={this.handleEmailChange} placeholder='Enter the email address' floatLabelType='Never'/> 
+		<input type="submit" value="Submit" style={{marginLeft: "40%"}} />
 		</form>
 		</div>
 		<Chart
@@ -41,7 +50,7 @@ export default class App extends React.Component<{}, {}> {
   			loader={<div>Loading Chart</div>}
   			data={[
    			 ['Task', 'Hours per Day'],
-			['Phinsing', this.state.phishing],
+			['Phishing', this.state.phishing],
     		['Not Phishing', this.state.notPhishing],
   			]}
   			options={{
@@ -64,7 +73,9 @@ export default class App extends React.Component<{}, {}> {
   	handleSubmit(event) {
 		const value = {
 			"id": "1",
-      		"text": this.state.value
+      		"content": this.state.content,
+			"subject_line" : this.state.subject_line,
+			"email_address" : this.state.email_address
     	}
 	this.apiClient.doText(value).then((data) =>
     {   this.setState({phishing: data});
@@ -75,8 +86,14 @@ export default class App extends React.Component<{}, {}> {
 		 });
 	}
 	handleChange(event) {
-    	this.setState({value: event.target.value});
+    	this.setState({content: event.target.value});
   	}
+	handleSubjChange(event) {
+		this.setState({subject_line: event.target.value});
+	}
+	handleEmailChange(event) {
+		this.setState({email_address: event.target.value});
+	}
 }
 ReactDOM.render(<App />, document.getElementById('root'));
 

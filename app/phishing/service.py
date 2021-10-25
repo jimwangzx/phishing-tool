@@ -1,5 +1,4 @@
 from .schema import Text
-from .schema import Email
 class Service(object):
 
   def processText(text):
