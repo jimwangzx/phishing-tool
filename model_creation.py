@@ -7,6 +7,7 @@ import re
 from nltk.corpus.reader.chasen import test
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
+from nltk.util import ngrams
 
 # Python package for holding data
 import pandas as pd
@@ -25,6 +26,9 @@ from sklearn.naive_bayes import MultinomialNB
 
 # Python package for parsing data from email files
 import email
+
+# Python package for saving machine learning models for later use
+import pickle
 
 '''
 Email data gotten from: https://www.kaggle.com/veleon/ham-and-spam-dataset
@@ -163,7 +167,7 @@ def load_email(is_spam, filename):
 def seedSetter(): 
 	return 0.3
 
-def model_creation(classifier_params):
+def optimal_model_searching(classifier_params):
     ### Text Data Collecting and Preprocessing ###
     texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
     texts_df.dropna(1, inplace=True) #Removing excess variable columns
@@ -263,5 +267,102 @@ def model_creation(classifier_params):
         f.writelines("")
         f.close()
 
+def optimal_model_saving():
+    ### Text Data Collecting and Preprocessing ###
+    texts_df = pd.read_csv(r"text_data\spam.csv", encoding="ISO-8859-1")
+    texts_df.dropna(1, inplace=True) #Removing excess variable columns
+    texts_df['v2'] = texts_df['v2'].apply(clean_text)
+    texts_df['v1'] = texts_df['v1'].apply(convert_labels)
 
-model_creation(models_of_interest)
+    ### Email Data Collecting and Preprocessing ###
+    os.listdir('email_data/hamnspam/')
+    ham_filenames = [name for name in sorted(os.listdir('email_data/hamnspam/ham')) if len(name) > 20]
+    spam_filenames = [name for name in sorted(os.listdir('email_data/hamnspam/spam')) if len(name) > 20]
+    ham_emails = [load_email(is_spam=False, filename=name) for name in ham_filenames]
+    spam_emails = [load_email(is_spam=True, filename=name) for name in spam_filenames]
+    # The above lines of code were written by the creator of the dataset Wessel Van Lit
+
+    # Making list of tuples containing all emails and shuffling in preparation for model training
+    all_emails = [(email, 0) for email in ham_emails] + [(email, 1) for email in spam_emails]
+    random.shuffle(all_emails, seedSetter)
+
+    # Creating tuple lists for email subjects, email content, and email addresses to be fed into dataframes
+    all_subjects = [(markedMail[0]['Subject'], markedMail[1]) for markedMail in all_emails]
+    all_addresses = [(markedMail[0]['From'], markedMail[1]) for markedMail in all_emails if str(markedMail[0]['From'])[:5] != "=?iso"]
+    all_bodies = [(markedMail[0].get_payload(), markedMail[1]) for markedMail in all_emails]
+    
+    #Some preprocessing work before text cleaning as we have straggler classes and objects alongside strings
+    valid_subs = []
+    for sub in all_subjects:
+        if isinstance(sub[0], str):
+            valid_subs.append(sub)
+
+    valid_adds = []
+    for add in all_addresses:
+        if isinstance(add[0], str):
+            valid_adds.append(add)
+
+    valid_bods = []
+    for bod in all_bodies:
+        if isinstance(bod[0], str):
+            valid_bods.append(bod)    
+
+    # Creating corresponding dataframes
+    subject_df = pd.DataFrame(data=valid_subs, columns=["subject", "is_spam"])
+    address_df = pd.DataFrame(data=valid_adds, columns=["address", "is_spam"])
+    body_df = pd.DataFrame(data=valid_bods, columns=["body", "is_spam"])
+
+    subject_df['subject'] = subject_df['subject'].apply(clean_body)
+    address_df['address'] = address_df['address'].apply(clean_address)
+    body_df['body'] = body_df['body'].apply(clean_body)
+
+    ### Text Data Model Creation ###
+    # 70% of the data allocated to training
+    X_text = texts_df.v2
+    y_text = texts_df.v1
+    X_train_text, X_test_text, y_train_text, y_test_text = train_test_split(X_text, y_text, test_size=0.3, random_state = 1)
+
+    ### Email Data Model Creation ###
+    # Subject
+    X_email_subj = subject_df.subject
+    y_email_subj = subject_df.is_spam
+    X_train_email_subj, X_test_email_subj, y_train_email_subj, y_test_email_subj = train_test_split(X_email_subj, y_email_subj, test_size=0.3, random_state = 1)
+
+    # Address
+    X_email_add = address_df.address
+    y_email_add = address_df.is_spam
+    X_train_email_add, X_test_email_add, y_train_email_add, y_test_email_add = train_test_split(X_email_add, y_email_add, test_size=0.3, random_state = 1)
+
+    # Subject
+    X_email_body = body_df.body
+    y_email_body = body_df.is_spam
+    X_train_email_body, X_test_email_body, y_train_email_body, y_test_email_body = train_test_split(X_email_body, y_email_body, test_size=0.3, random_state = 1)
+    '''
+    These models are created with the optimal hyperparameters found by calling the optimal_model_searching function.
+    If optimal parameters are defaults when calling the models, they aren't explicitly defined below
+    '''
+    text_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer_porter)),
+                        ('clf', SGDClassifier(random_state=1))])
+
+    subject_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer_porter)),
+                        ('clf', SGDClassifier(random_state=1))])
+
+    address_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer, ngram_range=(1,2))),
+                        ('clf', SVC(random_state=1, kernel='linear'))])
+
+    body_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer, ngram_range=(1,2))),
+                        ('clf', SGDClassifier(random_state=1, alpha=.00001))])
+
+    text_class_model.fit(X_train_text, y_train_text)
+    pickle.dump(text_class_model, open("text_class_model.sav", 'wb'))
+
+    subject_class_model.fit(X_train_email_subj, y_train_email_subj)
+    pickle.dump(subject_class_model, open("subject_class_model.sav", 'wb'))
+
+    address_class_model.fit(X_train_email_add, y_train_email_add)
+    pickle.dump(address_class_model, open("address_class_model.sav", 'wb'))
+
+    body_class_model.fit(X_train_email_body, y_train_email_body)
+    pickle.dump(body_class_model, open("body_class_model.sav", 'wb'))
+
+optimal_model_saving()
