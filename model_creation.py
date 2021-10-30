@@ -42,12 +42,12 @@ Notes:
 - the p metric in kNeighborsClassifier has the following mapping: 1 - manhattan distance, 2 - euclidean distance, 3 - minkowski distance
 '''
 models_of_interest = [
-(SGDClassifier(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__alpha': [.00001, .0001, .001, .01], 'clf__loss': ['log', 'hinge']}),
-(DecisionTreeClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
-(LogisticRegression(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__solver': ['liblinear', 'saga'], 'clf__C': [.001, .01, .1, 1.0]}),
-(SVC(random_state=1), {'clf__C': [.001, .01, .1, 1.0], 'clf__kernel': ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']}),
-(RandomForestClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__n_estimators': range(50, 175, 25), 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
-(GradientBoostingClassifier(random_state=1), {'clf__criterion': ['friedman_mse', 'squared_error'], 'clf__n_estimators': range(50, 175, 25), 'clf__loss': ['deviance', 'exponential'], 'clf__learning_rate': [0.01, 0.075, 0.1, 0.25, 0.2]}),
+#(SGDClassifier(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__alpha': [.00001, .0001, .001, .01], 'clf__loss': ['log', 'hinge']}),
+#(DecisionTreeClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
+#(LogisticRegression(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__solver': ['liblinear', 'saga'], 'clf__C': [.001, .01, .1, 1.0]}),
+#(SVC(random_state=1), {'clf__C': [.001, .01, .1, 1.0], 'clf__kernel': ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']}),
+#(RandomForestClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__n_estimators': range(50, 175, 25), 'clf__max_depth': range(2, 10, 2), 'clf__min_samples_split': range(2,10, 2), 'clf__min_samples_leaf': range(1,10)}),
+#(GradientBoostingClassifier(random_state=1), {'clf__criterion': ['friedman_mse', 'squared_error'], 'clf__n_estimators': range(50, 175, 25), 'clf__loss': ['deviance', 'exponential'], 'clf__learning_rate': [0.01, 0.075, 0.1, 0.25, 0.2]}),
 (KNeighborsClassifier(), {'clf__n_neighbors': range(1,10), 'clf__leaf_size': range(20, 40), 'clf__p': [1, 2, 3], 'clf__weights': ['uniform', 'distance']}),
 (MultinomialNB(), {})] 
 
