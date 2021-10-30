@@ -2,10 +2,14 @@ from flask import Flask, json, g, request
 from app.phishing.service import Service as service
 from app.phishing.schema import Text
 from app.phishing.schema import Email 
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 @app.route("/phishing/text", methods=["POST"])
 def processText():
+  print("I'm here")
+  print(request.form)
   text  = Text().load(json.loads(request.data))
 
   if text.errors:
