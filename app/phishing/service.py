@@ -13,9 +13,9 @@ class Service(object):
 
     # Getting prediction with probability
     textPrediction = textModel.predict_proba(cleanedTextContent)
-    return 99
+    return textPrediction[1] * 100
 
-  def  processEmail(email):
+  def processEmail(email):
     # Accessing and converting email components. These are stored in lists so that their values can be fed to our trained model to predict on
     cleanedAdd = [clean_address(email["email_address"])]
     cleanedSub = [clean_body(email["subject"])]
@@ -36,10 +36,8 @@ class Service(object):
     overallSpamPred = (addPrediction[1] + subPrediction[1] + bodPrediction[1])/3
     overallPred = [overallHamPred, overallSpamPred]
     '''
-    predict probs will return a list of 2 values where the first value is the probability that the input is not spam and 
+    predict_proba will return a list of 2 values where the first value is the probability that the input is not spam and 
     the second value is the probability that the input is spam
     '''
-
-
-    return 100
+    return overallPred[1]*100
 
