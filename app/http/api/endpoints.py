@@ -10,7 +10,9 @@ CORS(app)
 @app.route("/phishing/text", methods=["POST"])
 def processText():
   text  = Text().load(json.loads(request.data))
+  print(text)
   payload = text.data
+  print(payload)
   print(payload.get('email_address'))
   if payload.get('errors'):
     return json_response({'error': text.errors}, 422)
@@ -19,6 +21,7 @@ def processText():
     response = service.processEmail(payload)
   else:
     response = service.processText(payload)
+  print(response) 
   return json_response(response)
 
 def json_response(payload, status=200):
