@@ -1,0 +1,4 @@
+Text: [{'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer at 0x000001A124A7D4C8>, 'vect__use_idf': True}, 0.9566666666666667, 0.9593301435406698]
+Subject: [{'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer at 0x000001A124A7D4C8>, 'vect__use_idf': True}, 0.8855438401775805, 0.9045005488474204]
+Address: [{'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer at 0x000001A124A7D4C8>, 'vect__use_idf': False}, 0.8734117647058823, 0.8737650933040615]
+Body: [{'vect__ngram_range': (2, 2), 'vect__tokenizer': <function tokenizer_porter at 0x000001A124A7D948>, 'vect__use_idf': True}, 0.9234636591478698, 0.9195804195804196]

@@ -1,0 +1,4 @@
+Text: [{'clf__C': 1.0, 'clf__penalty': 'l2', 'clf__solver': 'liblinear', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer_porter at 0x000001C8E445ECA8>, 'vect__use_idf': False}, 0.9625641025641025, 0.9635167464114832]
+Subject: [{'clf__C': 1.0, 'clf__penalty': 'l1', 'clf__solver': 'liblinear', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer at 0x000001C8E445AEE8>, 'vect__use_idf': False}, 0.8789489456159822, 0.8902305159165752]
+Address: [{'clf__C': 1.0, 'clf__penalty': 'l2', 'clf__solver': 'saga', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer at 0x000001C8E445AEE8>, 'vect__use_idf': False}, 0.8654117647058823, 0.8562019758507134]
+Body: [{'clf__C': 1.0, 'clf__penalty': 'l2', 'clf__solver': 'liblinear', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer_porter at 0x000001C8E445ECA8>, 'vect__use_idf': False}, 0.9509774436090226, 0.9498834498834499]

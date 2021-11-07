@@ -1,0 +1,4 @@
+Text: [{'clf__alpha': 0.0001, 'clf__loss': 'hinge', 'clf__penalty': 'l2', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer_porter at 0x000001C8E445ECA8>, 'vect__use_idf': True}, 0.9841025641025641, 0.9838516746411483]
+Subject: [{'clf__alpha': 1e-05, 'clf__loss': 'log', 'clf__penalty': 'l1', 'vect__ngram_range': (1, 2), 'vect__tokenizer': <function tokenizer at 0x000001C8E445AEE8>, 'vect__use_idf': False}, 0.9123951165371809, 0.9341383095499451]
+Address: [{'clf__alpha': 1e-05, 'clf__loss': 'hinge', 'clf__penalty': 'l1', 'vect__ngram_range': (1, 1), 'vect__tokenizer': <function tokenizer_porter at 0x000001C8E445ECA8>, 'vect__use_idf': False}, 0.915764705882353, 0.9352360043907794]
+Body: [{'clf__alpha': 1e-05, 'clf__loss': 'hinge', 'clf__penalty': 'l2', 'vect__ngram_range': (1, 2), 'vect__tokenizer': <function tokenizer at 0x000001C8E445AEE8>, 'vect__use_idf': True}, 0.9889949874686718, 0.9871794871794872]
