@@ -14,9 +14,8 @@ class Service(object):
 
     # Getting prediction with probability
     #textPrediction = textModel.predict_proba(cleanedTextContent)
-    textPrediction = textModel.decision_function(cleanedTextContent)
-    print(textPrediction)
-    return abs(textPrediction[0] * 100)
+    textPrediction = textModel.predict(cleanedTextContent)
+    return textPrediction
 
   def processEmail(email):
     # Accessing and converting email components. These are stored in lists so that their values can be fed to our trained model to predict on
@@ -33,16 +32,13 @@ class Service(object):
     #addPrediction = addModel.predict_probs(cleanedAdd)
     #subPrediction = subModel.predict_probs(cleanedSub)
     #bodPrediction = bodModel.predict_probs(cleanedBod)
-    addPrediction = addModel.decision_function(cleanedAdd)
-    subPrediction = subModel.predict_proba(cleanedSub)
-    bodPrediction = bodModel.decision_function(cleanedBod)
+    addPrediction = addModel.predict(cleanedAdd)
+    subPrediction = subModel.predict(cleanedSub)
+    bodPrediction = bodModel.predict(cleanedBod)
     # Creating aggregate prediction
-    overallHamPred = (addPrediction[0] + subPrediction[0] + bodPrediction[0])/3
-    overallSpamPred = (addPrediction[1] + subPrediction[1] + bodPrediction[1])/3
-    overallPred = [overallHamPred, overallSpamPred]
-    '''
-    predict_proba will return a list of 2 values where the first value is the probability that the input is not spam and 
-    the second value is the probability that the input is spam
-    '''
-    return overallPred[1]*100
+    if addPrediction + subPrediction + bodPrediction >= 2:
+      #Using a two thirds majority to decide if spam or not
+      return 1
+    else:
+      return 0
 
