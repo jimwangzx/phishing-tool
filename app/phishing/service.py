@@ -1,3 +1,4 @@
+from operator import add
 from .schema import Text
 import pickle
 from model_creation import clean_address, clean_body, clean_text
@@ -13,9 +14,8 @@ class Service(object):
     textModel = pickle.load(open("text_class_model.sav", 'rb'))
 
     # Getting prediction with probability
-    #textPrediction = textModel.predict_proba(cleanedTextContent)
-    textPrediction = textModel.predict(cleanedTextContent)
-    return textPrediction
+    textPrediction = textModel.predict_proba(cleanedTextContent)
+    return textPrediction[1]*100
 
   def processEmail(email):
     # Accessing and converting email components. These are stored in lists so that their values can be fed to our trained model to predict on
@@ -29,16 +29,10 @@ class Service(object):
     bodModel = pickle.load(open("body_class_model.sav", 'rb'))
 
     # Getting predictions with probability
-    #addPrediction = addModel.predict_probs(cleanedAdd)
-    #subPrediction = subModel.predict_probs(cleanedSub)
-    #bodPrediction = bodModel.predict_probs(cleanedBod)
-    addPrediction = addModel.predict(cleanedAdd)
-    subPrediction = subModel.predict(cleanedSub)
-    bodPrediction = bodModel.predict(cleanedBod)
+    addPrediction = addModel.predict_proba(cleanedAdd)
+    subPrediction = subModel.predict_proba(cleanedSub)
+    bodPrediction = bodModel.predict_proba(cleanedBod)
+    
     # Creating aggregate prediction
-    if addPrediction + subPrediction + bodPrediction >= 2:
-      #Using a two thirds majority to decide if spam or not
-      return 1
-    else:
-      return 0
+    return ((addPrediction[1] + subPrediction[1] + bodPrediction[1])/3)*100
 

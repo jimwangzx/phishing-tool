@@ -24,6 +24,7 @@ from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.calibration import CalibratedClassifierCV
 
 # Python package for parsing data from email files
 import email
@@ -168,6 +169,7 @@ def load_email(is_spam, filename):
 def seedSetter(): 
 	return 0.3
 
+# Function to test different models with our different data sources
 def optimal_model_searching(classifier_params):
     ### Text Data Collecting and Preprocessing ###
     texts_df = pd.read_csv(r"text_data/spam.csv", encoding="ISO-8859-1")
@@ -268,6 +270,7 @@ def optimal_model_searching(classifier_params):
         f.writelines("")
         f.close()
 
+# Function to save optimal models
 def optimal_model_saving():
     ### Text Data Collecting and Preprocessing ###
     texts_df = pd.read_csv(r"text_data/spam.csv", encoding="ISO-8859-1")
@@ -342,17 +345,18 @@ def optimal_model_saving():
     These models are created with the optimal hyperparameters found by calling the optimal_model_searching function.
     If optimal parameters are defaults when calling the models, they aren't explicitly defined below
     '''
+    
     text_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer_porter)),
-                        ('clf', SGDClassifier(random_state=1))])
+                        ('clf', CalibratedClassifierCV(SGDClassifier(random_state=1), cv=5))])
 
     subject_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer_porter)),
-                        ('clf', SGDClassifier(random_state=1))])
+                        ('clf', CalibratedClassifierCV(SGDClassifier(random_state=1), cv=5))])
 
     address_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer, ngram_range=(1,2))),
-                        ('clf', SVC(random_state=1, kernel='linear'))])
+                        ('clf', SVC(random_state=1, kernel='linear', probability=True))])
 
     body_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer, ngram_range=(1,2))),
-                        ('clf', SGDClassifier(random_state=1, alpha=.00001))])
+                        ('clf', CalibratedClassifierCV(SGDClassifier(random_state=1, alpha=.00001), cv=5))])
 
     text_class_model.fit(X_train_text, y_train_text)
     pickle.dump(text_class_model, open("text_class_model.sav", 'wb'))
@@ -367,3 +371,29 @@ def optimal_model_saving():
     pickle.dump(body_class_model, open("body_class_model.sav", 'wb'))
 
 optimal_model_saving()
+
+# Attempting to wrap text class model in calibrated classifier to get a prediction
+def prediction_probability_discovery():
+    ### Text Data Collecting and Preprocessing ###
+    texts_df = pd.read_csv(r"text_data/spam.csv", encoding="ISO-8859-1")
+    texts_df.dropna(1, inplace=True) #Removing excess variable columns
+    texts_df['v2'] = texts_df['v2'].apply(clean_text)
+    texts_df['v1'] = texts_df['v1'].apply(convert_labels)
+
+    ### Text Data Model Creation ###
+    # 70% of the data allocated to training
+    X_text = texts_df.v2
+    y_text = texts_df.v1
+    X_train_text, X_test_text, y_train_text, y_test_text = train_test_split(X_text, y_text, test_size=0.3, random_state = 1)
+
+    #This is a new line. Instead of using the SGD classifier in our pipeline, we wrap it in a calibrated classifier and then pass it to the pipeline 
+    cal_model = CalibratedClassifierCV(SGDClassifier(random_state=1), cv=5)
+
+    text_class_model = Pipeline([('vect', TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None, tokenizer=tokenizer_porter)),
+                        ('clf', cal_model)])
+
+    text_class_model.fit(X_train_text, y_train_text)
+    y_test_pred = text_class_model.predict_proba(["Go until jurong point, crazy.. Available only in bugis n great world la e buffet... Cine there got amore wat...", "Free entry in 2 a wkly comp to win FA Cup final tkts 21st May 2005. Text FA to 87121 to receive entry question(std txt rate)T&C's apply 08452810075over18's"])
+    print("test with no prefitting:")
+    print(y_test_pred)
+    print()
