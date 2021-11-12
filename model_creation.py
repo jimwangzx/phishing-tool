@@ -77,10 +77,9 @@ def clean_body(text):
 # With cleaning: CV Accuracy: 0.944 Test Accuracy: 0.963
 def clean_address(text):
     text = text.lower() # lowercase text
-    text = BAD_SYMBOLS_RE.sub('', text) # delete symbols which are in BAD_SYMBOLS_RE from text
+    text = BAD_SYMBOLS_RE.sub(' ', text) # delete symbols which are in BAD_SYMBOLS_RE from text
     text = ' '.join(word for word in text.split() if word not in STOPWORDS) # delete stopwors from text
-    add = text.split("<")[-1][:-1].replace("@", " ").replace(".", " ")
-    return add
+    return text
 
 #print(clean_address(test))
 #quit()
