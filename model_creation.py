@@ -166,7 +166,7 @@ def load_email(is_spam, filename):
 
 # Function to make sure we shuffle our emails the same way each time we run the program
 def seedSetter(): 
-	return 0.3
+    return 0.3
 
 # Function to test different models with our different data sources
 def optimal_model_searching(classifier_params):
