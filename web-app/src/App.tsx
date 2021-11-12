@@ -81,7 +81,7 @@ function App() {
 
 	return (
     <div style={{ marginLeft: "40%"}}>
-      	<h2>Phishing detector</h2>
+      	<h2>PhisherCop</h2>
 		
 		<div className="multiline" style={{marginRight: "40%"}}>
         <form onSubmit={handleSubmit}>
