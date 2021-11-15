@@ -80,7 +80,7 @@ function App() {
 	}
 
 	return (
-    <div style={{ marginLeft: "40%"}}>
+    <div style={{ marginLeft: "30%"}}>
       	<h2>PhisherCop</h2>
 		
 		<div className="multiline" style={{marginRight: "40%"}}>
@@ -93,10 +93,10 @@ function App() {
             <TextBoxComponent multiline={false} onChange={handleEmailChange} placeholder='Enter the email address' floatLabelType='Never'/> 
 		<input type="submit" value="Submit" style={{marginLeft: "40%"}} />
 		</form>
-		</div>
-		<Chart
-  			width={'500px'}
-  			height={'300px'}
+		
+		<Chart 
+  			width={'900px'}
+  			height={'500px'}
   			chartType="PieChart"
   			loader={<div>Loading Chart</div>}
   			data={[
@@ -106,9 +106,11 @@ function App() {
   			]}
   			options={{
     		title: 'Is it phishing?',
+		    PieChart: { width: '50%', height: '70%' },
   			}}
   			rootProps={{ 'data-testid': '1' }}
 		/>
+	 </div>
     </div>
   );
 }
