@@ -9,6 +9,7 @@ from nltk.corpus.reader.chasen import test
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 from nltk.util import ngrams
+from itertools import groupby
 
 # Python package for holding data
 import pandas as pd
@@ -49,12 +50,23 @@ Notes:
 '''
 models_of_interest = [
 (SGDClassifier(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__alpha': [.00001, .0001, .001, .01], 'clf__loss': ['log', 'hinge']}),
-(DecisionTreeClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__max_depth': range(2, 10), 'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
+
+(DecisionTreeClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__max_depth': range(2, 10), 
+'clf__min_samples_split': range(2,10), 'clf__min_samples_leaf': range(1,10)}),
+
 (LogisticRegression(random_state=1), {'clf__penalty': ['l1', 'l2'], 'clf__solver': ['liblinear', 'saga'], 'clf__C': [.001, .01, .1, 1.0]}),
+
 (SVC(random_state=1), {'clf__C': [.001, .01, .1, 1.0], 'clf__kernel': ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']}),
-(RandomForestClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__n_estimators': range(50, 175, 25), 'clf__max_depth': range(2, 10, 2), 'clf__min_samples_split': range(2,10, 2), 'clf__min_samples_leaf': range(1,10)}),
-(GradientBoostingClassifier(random_state=1), {'clf__criterion': ['friedman_mse', 'squared_error'], 'clf__n_estimators': range(50, 175, 25), 'clf__loss': ['deviance', 'exponential'], 'clf__learning_rate': [0.01, 0.075, 0.1, 0.25, 0.2]}),
-(KNeighborsClassifier(), {'clf__n_neighbors': range(1,10), 'clf__leaf_size': range(20, 40), 'clf__p': [1, 2, 3], 'clf__weights': ['uniform', 'distance']}),
+
+(RandomForestClassifier(random_state=1), {'clf__criterion': ['gini', 'entropy'], 'clf__n_estimators': range(50, 175, 25), 
+'clf__max_depth': range(2, 10, 2), 'clf__min_samples_split': range(2,10, 2), 'clf__min_samples_leaf': range(1,10)}),
+
+(GradientBoostingClassifier(random_state=1), {'clf__criterion': ['friedman_mse', 'squared_error'], 
+'clf__n_estimators': range(50, 175, 25), 'clf__loss': ['deviance', 'exponential'], 'clf__learning_rate': [0.01, 0.075, 0.1, 0.25, 0.2]}),
+
+(KNeighborsClassifier(), {'clf__n_neighbors': range(1,10), 'clf__leaf_size': range(20, 40), 
+'clf__p': [1, 2, 3], 'clf__weights': ['uniform', 'distance']}),
+
 (MultinomialNB(), {})] 
 
 # This function gets rid of html tags as well as excess whitespace between paragraphs
@@ -75,14 +87,42 @@ def clean_body(text):
 # This function cleans addresses. Tested the validity of this with an SGD classifier and found the following improvements:
 # Without cleaning: CV Accuracy: 0.884, Test Accuracy: 0.879
 # With cleaning: CV Accuracy: 0.944 Test Accuracy: 0.963
+
+'''
+Breakdown email address into sections
+1. Split things around the ., add num .'s found into tokens
+2. Split around @, add num @'s (one token containing num @s) found into tokens
+'''
+def clean_address(text):
+    text = text.lower() # lowercase text
+    newString = text[0]
+    for cIndex in range(1, len(text)):
+        if text[cIndex] == ".":
+            if text[cIndex-1] == ".":
+                newString += "."
+            else:
+                newString += " ."
+        elif text[cIndex] == "@":
+            if text[cIndex-1] == "@":
+                newString += "@"
+            else:
+                newString += " @"
+        else:
+            if text[cIndex-1] == "." or text[cIndex-1] == "@":
+                newString += " " + text[cIndex]
+            else:
+                newString += text[cIndex]
+    #print(result)
+    return newString
+
+'''
 def clean_address(text):
     text = text.lower() # lowercase text
     text = BAD_SYMBOLS_RE.sub(' ', text) # delete symbols which are in BAD_SYMBOLS_RE from text
     text = ' '.join(word for word in text.split() if word not in STOPWORDS) # delete stopwors from text
     return text
+'''
 
-#print(clean_address(test))
-#quit()
 def clean_text(text):
     emojis = re.compile(
     "(["
@@ -369,7 +409,7 @@ def optimal_model_saving():
     body_class_model.fit(X_train_email_body, y_train_email_body)
     pickle.dump(body_class_model, open("body_class_model.sav", 'wb'))
 
-optimal_model_saving()
+#optimal_model_saving()
 
 # Attempting to wrap text class model in calibrated classifier to get a prediction
 def prediction_probability_discovery():
